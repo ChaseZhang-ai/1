@@ -1,6 +1,6 @@
 # Swift IARS — Integrated Augmented Reality System
 
-**Algorithm core of a helmet-mounted AR head-up display for high-dynamic, hands-busy environments — skydiving, disaster-response firefighting, and tactical freefall.**
+**Algorithm core of a helmet-mounted AR head-up display for high-dynamic, hands-busy environments — skydiving, wingsuit flight, and disaster-response firefighting.**
 
 `Python 3.9+` · `32 unit tests` · `MIT licensed` · `2024 prototype, open-sourced 2026`
 
@@ -14,7 +14,8 @@ photograph**; the numbers shown are illustrative, not recorded telemetry.*
 ## Overview
 
 Swift IARS (Integrated Augmented Reality System) is a helmet-clip AR module that replaces the
-four to five separate instruments a skydiver, firefighter or tactical operator currently straps
+four to five separate instruments a skydiver, firefighter or mountain-rescue responder currently
+straps
 to themselves with one fused, stabilised head-up display.
 
 The 2024 effort produced a physical proof-of-concept: a helmet-mounted sensor head and host
@@ -56,7 +57,6 @@ without taking a hand off the controls. Today that means a bundle of single-purp
 | Skydiving / wingsuit (civil) | altimeter, AAD audible, FlySight GPS logger, GPS watch, ring sight | **$2,300** |
 | Mountain biking (pro / hobby) | GPS cycle computer, radar tail-light | **$880** |
 | Firefighting (government) | handheld thermal camera, ruggedised GPS | **$6,800** |
-| Military freefall (MFF) | altimeter, AAD, GPS + ballistic, HAHO canopy kit, tracker | **$4,850** |
 
 Every one of those is read by looking *away* from the task, and none of them knows what the
 others are measuring. The value is in the fusion and the *presentation*, not in any single sensor.
@@ -85,7 +85,7 @@ photograph.*
 | Compute | on-helmet MCU + sensor head (no external phone or pack) |
 | Sensors | BMX160 IMU (accel + gyro + magnetometer), MS5611 barometer, GNSS/BeiDou, pitot, ambient light *(planned sensor set; the POC host board carried the IMU and barometer)* |
 | Alerting | multilingual audio cues + AAD status |
-| Targets | C-end extreme sports → B-end OEM (motorcycle/helmet brands) → G-end firefighting & military |
+| Targets | C-end extreme sports → B-end OEM (motorcycle/helmet brands) → G-end firefighting & emergency response |
 
 The table above is the **2024 design target and the state of the POC hardware**, not a measured
 production specification. The stereo visual aid used by the navigator below is an addition made
@@ -314,7 +314,7 @@ display does not lose lock when the scene is a featureless sky or a smoke-filled
 binocular (depth-correct) rather than monocular, and it is designed for the sensor **and** the
 display to live on the helmet instead of tethering to a phone.
 
-**Versus military / industrial HMDs** (Vuzix-, Rokid-class optical modules): those ship the
+**Versus industrial / enterprise HMDs** (Vuzix-, Rokid-class optical modules): those ship the
 *display* and leave the sensing, fusion and stabilisation to the integrator. The contribution
 here is exactly that missing layer — the algorithms that turn a helmet full of sensors into one
 usable, stable, redundant picture.
