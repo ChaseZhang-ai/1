@@ -19,10 +19,12 @@ to themselves with one fused, stabilised head-up display.
 
 The 2024 effort produced a physical proof-of-concept: a helmet-mounted sensor head and host
 board, a geometric-waveguide optical module, multilingual audio alerting, and a flight unit that
-completed its air-data collection mission. The **algorithm core** — the four blocks below — is
-what this repository contains: implemented in 2026 from the 2024 design and released open
-source. [Provenance](#provenance-how-this-repository-was-built) states exactly which parts are
-original 2024 work and which are the 2026 implementation.
+flew more than thirty test flights and delivered its basic functions. The **algorithm core** —
+the four blocks below — is what this repository contains: implemented in 2026 from the 2024
+design and released open source.
+[Provenance](#provenance-how-this-repository-was-built) states exactly which parts are original
+2024 work, what the flight campaign did and did not validate, and which parts are the 2026
+implementation.
 
 This repository open-sources the **four algorithm blocks that make the display usable in
 freefall**, together with a synthetic flight-data harness that lets anyone reproduce the
@@ -84,6 +86,7 @@ the team's industrial designer, not a photograph.*
 | Compute | on-helmet MCU + sensor head (no external phone or pack) |
 | Sensors | BMX160 IMU (accel + gyro + magnetometer), MS5611 barometer, GNSS/BeiDou, pitot, ambient light *(planned sensor set; the POC host board carried the IMU and barometer)* |
 | Alerting | multilingual audio cues + AAD status |
+| 2024 validation | 30+ test flights completed; basic functions demonstrated; air-data collected for algorithm development |
 | Targets | C-end extreme sports → B-end OEM (motorcycle/helmet brands) → G-end firefighting & emergency response |
 
 The table above is the **2024 design target and the state of the POC hardware**, not a measured
@@ -244,12 +247,18 @@ project lead and the embedded/algorithm work**: the product concept, the require
 analysis, the decomposition of the display problem into algorithm blocks, the viewing-comfort and
 anti-shake acceptance criteria, and the algorithm design steps (separating voluntary head
 rotation from buffeting, defining anti-shake acceptance metrics, cancelling jitter, then
-following head rotation). The **industrial and mechanical design was
-contributed by an industrial designer on the team**, and the flight-test campaign and air-data
-collection were a **team effort**. The 2024 material names three core algorithms — redundancy
-design, anti-shake, and binocular imaging — and marks them "substantially developed"; the flight
-unit completed its air-data collection mission explicitly so the recorded data could drive the
-final algorithm design.
+following head rotation). The **industrial and mechanical design was contributed by an industrial
+designer on the team**, and the flight-test campaign and air-data collection were a **team
+effort**. The flight unit completed **more than thirty test flights and reached a state where its
+basic functions worked**, and its recorded air-data was collected specifically to drive the final
+algorithm design. The 2024 material names three core algorithms — redundancy design, anti-shake,
+and binocular imaging — and marks them "substantially developed".
+
+**What the 30+ flights did and did not validate.** They validated the hardware and the basic
+instrument functions (altitude/speed readout, audio alerting, data logging) in real freefall. They
+were *not* a validation of the four algorithms in this repository: those were implemented in 2026
+and are validated in simulation only, which is why every performance number in this README is
+labelled as a simulation result.
 
 **What is written in 2026.** This repository. The original 2024 source is not public and is not
 included here; the code, tests, figures and documentation in this repo are my 2026 work, written
