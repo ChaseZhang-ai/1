@@ -17,7 +17,7 @@ dependencies = ["numpy>=1.23"]
 dev = ["pytest>=7.0", "matplotlib>=3.6", "pillow>=9.0"]
 
 [project.urls]
-Homepage = "https://github.com/zixinzenith/1"
+Homepage = "https://github.com/zixinzenith/swift-iars"
 
 [tool.setuptools.packages.find]
 include = ["iars*"]
