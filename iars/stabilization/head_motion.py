@@ -82,8 +82,11 @@ class StabilizationResult:
 
 
 class HeadMotionSeparator:
-    def __init__(self, config: StabilizationConfig | None = None):
+    def __init__(self, config: StabilizationConfig | None = None, intent_classifier=None):
         self.cfg = config or StabilizationConfig()
+        # Optional learned gate (iars.stabilization.intent.IntentClassifier).  When
+        # absent the threshold/hysteresis heuristic below is used.
+        self.intent_classifier = intent_classifier
         fs = self.cfg.sample_rate_hz
         self._lp = design_biquad("lowpass", fs, self.cfg.voluntary_cutoff_hz)
         lo, hi = self.cfg.vibration_band_hz
@@ -129,7 +132,13 @@ class HeadMotionSeparator:
             gyro_dps = gyro_dps.T
 
         voluntary, vibration = self.separate(gyro_dps)
-        intent = self.detect_intent(voluntary)
+        if self.intent_classifier is not None:
+            intent = _expand_window_predictions(
+                self.intent_classifier.predict_stream(gyro_dps, self.cfg.sample_rate_hz),
+                len(gyro_dps),
+            )
+        else:
+            intent = self.detect_intent(voluntary)
         dt = 1.0 / self.cfg.sample_rate_hz
 
         # Display rate = follow intent, reject buffet.  When the wearer is not
@@ -176,6 +185,16 @@ class HeadMotionSeparator:
             "intent_fraction": float(np.mean(np.linalg.norm(voluntary, axis=1) > self.cfg.intent_threshold_dps)),
             "display_latency_ms": float(1000.0 / (2.0 * np.pi * self.cfg.voluntary_cutoff_hz)),
         }
+
+
+def _expand_window_predictions(stream, n_samples: int) -> np.ndarray:
+    """Map windowed classifier decisions back onto the per-sample stream."""
+    centres, pred = stream
+    if len(centres) == 0:
+        return np.zeros(n_samples, dtype=bool)
+    idx = np.clip(np.asarray(centres), 0, n_samples - 1)
+    interp = np.interp(np.arange(n_samples), idx, np.asarray(pred, dtype=float))
+    return interp > 0.5
 
 
 def _rms(x: np.ndarray) -> float:

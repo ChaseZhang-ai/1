@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "swift-iars"
-version = "1.0.0"
-description = "Algorithm core of the Swift IARS integrated augmented-reality system: redundant sensor fusion, head-motion stabilisation, binocular display alignment and multi-sensor SLAM/INS fusion."
+version = "1.1.0"
+description = "Algorithm core of the Swift IARS integrated augmented-reality system: redundant sensor fusion, head-motion stabilisation, a learned intent gate, binocular display alignment and multi-sensor SLAM/INS fusion."
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
@@ -21,6 +21,9 @@ Homepage = "https://github.com/zixinzenith/swift-iars"
 
 [tool.setuptools.packages.find]
 include = ["iars*"]
+
+[tool.setuptools.package-data]
+"iars.stabilization" = ["intent_weights.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

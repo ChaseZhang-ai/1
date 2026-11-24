@@ -269,6 +269,103 @@ def figure_stereo(res):
     plt.close(fig)
 
 
+def figure_intent():
+    from iars.sensors.intent_dataset import make_episodes
+    from iars.stabilization.intent import IntentClassifier, extract_features, heuristic_intent_gate
+
+    fs = 400.0
+    # Must match the held-out split used by tools/train_intent.py so the numbers
+    # in the figure and in the README are the same measurement.
+    episodes = make_episodes(60, seed=10_000)
+    clf = IntentClassifier.load_default()
+
+    X, y = [], []
+    for ep in episodes:
+        f, c = extract_features(ep.gyro_dps, fs)
+        X.append(f)
+        y.append(ep.label[c])
+    X, y = np.vstack(X), np.concatenate(y)
+
+    h_pred, h_true = [], []
+    for ep in episodes:
+        _, c = extract_features(ep.gyro_dps, fs)
+        h_pred.append(heuristic_intent_gate(ep.gyro_dps, fs)[c])
+        h_true.append(ep.label[c])
+    h_pred, h_true = np.concatenate(h_pred), np.concatenate(h_true)
+
+    def metrics(pred, truth):
+        tp = np.sum(pred & truth)
+        fp = np.sum(pred & ~truth)
+        fn = np.sum(~pred & truth)
+        return np.array(
+            [
+                np.mean(pred == truth),
+                tp / max(tp + fp, 1),
+                tp / max(tp + fn, 1),
+            ]
+        )
+
+    learned = metrics(clf.predict(X), y)
+    heuristic = metrics(h_pred, h_true)
+
+    # One episode where both a turn and pure buffeting occur, for the strips.
+    ep = next(e for e in episodes if e.kind == "mixed")
+    t = np.arange(len(ep.gyro_dps)) / fs
+    gate_learned = clf.predict_stream(ep.gyro_dps, fs)[1]
+    gate_heur = heuristic_intent_gate(ep.gyro_dps, fs)
+    centres = clf.predict_stream(ep.gyro_dps, fs)[0]
+    gate_learned_ps = np.interp(np.arange(len(t)), centres, gate_learned.astype(float)) > 0.5
+
+    fig = plt.figure(figsize=(13.8, 6.2))
+    gs = fig.add_gridspec(2, 2, width_ratios=[1.55, 1.0], height_ratios=[1.0, 0.55],
+                          hspace=0.42, wspace=0.22)
+    ax_sig = fig.add_subplot(gs[0, 0])
+    ax_gate = fig.add_subplot(gs[1, 0], sharex=ax_sig)
+    ax_bar = fig.add_subplot(gs[:, 1])
+
+    ax_sig.fill_between(t, 0, 100, where=ep.label, color="#c8f2d8", alpha=0.8, step="mid",
+                        label="ground-truth turn")
+    ax_sig.plot(t, np.linalg.norm(ep.gyro_dps, axis=1), color="#9aa0a6", lw=0.9, label="measured |rate|")
+    ax_sig.plot(t, np.linalg.norm(ep.voluntary_dps, axis=1), color="#137a3a", lw=2.0,
+                label="true voluntary |rate|")
+    ax_sig.axhline(8.0, color="#e8534f", ls="--", lw=1.2, label="8 deg/s threshold")
+    ax_sig.set_ylim(0, 100)
+    ax_sig.set_ylabel("angular rate [deg/s]")
+    ax_sig.set_title("One episode: deliberate turn vs buffeting")
+    ax_sig.legend(fontsize=8, loc="upper right", ncol=2, framealpha=1.0)
+
+    from matplotlib.colors import ListedColormap
+
+    strip = np.vstack([ep.label.astype(float), gate_heur.astype(float), gate_learned_ps.astype(float)])
+    ax_gate.imshow(strip, aspect="auto", interpolation="nearest",
+                   cmap=ListedColormap(["#f2f2f2", "#28c76f"]),
+                   extent=[0, t[-1], 0, 3])
+    ax_gate.set_yticks([0.5, 1.5, 2.5])
+    ax_gate.set_yticklabels(["truth", "heuristic", "learned"], fontsize=8.5)
+    ax_gate.set_xlabel("time [s]")
+    ax_gate.set_title("Gate decisions (green = follow the head)", fontsize=10)
+
+    labels_bar = ["accuracy", "precision", "recall"]
+    xpos = np.arange(3)
+    ax_bar.bar(xpos - 0.19, heuristic, width=0.36, color="#b9c2cc", label="heuristic (2024)")
+    ax_bar.bar(xpos + 0.19, learned, width=0.36, color=GREEN, label="learned classifier")
+    for xi, (h, l) in enumerate(zip(heuristic, learned)):
+        ax_bar.text(xi - 0.19, h + 0.02, f"{h:.2f}", ha="center", fontsize=8.5, color="#555555")
+        ax_bar.text(xi + 0.19, l + 0.02, f"{l:.2f}", ha="center", fontsize=8.5, color="#0d3b21",
+                    fontweight="bold")
+    ax_bar.set_xticks(xpos)
+    ax_bar.set_xticklabels(labels_bar, fontsize=9.5)
+    ax_bar.set_ylim(0, 1.42)
+    ax_bar.set_yticks([0.0, 0.2, 0.4, 0.6, 0.8, 1.0])
+    ax_bar.set_ylabel("score")
+    ax_bar.set_title(f"Intent detection on held-out episodes ({len(episodes)})")
+    ax_bar.legend(fontsize=8.5, loc="upper center", ncol=2, framealpha=1.0)
+    ax_bar.grid(axis="y", color="#e8e8e8")
+
+    fig.savefig(os.path.join(ASSETS, "fig_intent.png"), bbox_inches="tight")
+    plt.close(fig)
+
+
 def main():
     _style()
     res = run_all(seed=7)
@@ -277,6 +374,7 @@ def main():
     figure_redundancy(res)
     figure_navigation(res)
     figure_stereo(res)
+    figure_intent()
     save_hud(os.path.join(ASSETS, "hud_render.png"), HudState())
     print("figures written to", ASSETS)
     for name in sorted(os.listdir(ASSETS)):
