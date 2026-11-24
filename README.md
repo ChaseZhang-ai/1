@@ -6,8 +6,7 @@
 
 ![Swift IARS HUD symbology over a freefall scene — 2024 design render](docs/assets/hero_freefall_hud.jpg)
 
-*HUD symbology composited over a freefall scene — a **2024 concept render from the project, not
-an in-flight photograph**; the numbers shown are illustrative, not recorded telemetry.*
+*HUD symbology composited over a freefall scene*
 
 ---
 
