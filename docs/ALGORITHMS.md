@@ -4,6 +4,10 @@ Design rationale and derivations for the four blocks in `iars/`. Units are SI th
 world frame is a local ENU frame (x east, y north, z up, **gravity along −z**). Quaternions are
 `[w, x, y, z]`, body→world.
 
+> These notes were written in 2026 alongside the implementation of the 2024 design. Every number
+> below comes from the synthetic harness in `iars/sensors/`, not from flight logs — see the
+> repository README's *Provenance* section.
+
 ---
 
 ## I. Redundancy design and fault-tolerant fusion
@@ -72,6 +76,36 @@ q_display ← q_display ⊗ Exp(ω_display dt)
 `g_vib = 0.05` corresponds to −26 dB; the measured −25.7 dB is close because the small residual
 comes from the band edges. Display latency is `1/(2π f_c) ≈ 88 ms` at `f_c = 1.8 Hz`, which is
 below the ≈100 ms threshold where a lagging horizon starts to feel wrong.
+
+### II-b. Learned intent gate (2026 addition)
+
+The fixed threshold above is the 2024 design; it has one systematic weakness. A hard buffet at
+5–8 Hz leaves a low-frequency envelope after the 1.8 Hz split, so a wearer who is only being
+shaken can exceed the 8 deg/s threshold and open the follow gate. On the synthetic episodes this
+costs precision: the heuristic reaches 0.53 precision at 0.95 recall, i.e. it follows the head
+when it should have frozen.
+
+The learned gate replaces the threshold with a logistic regression over eight window features
+(0.32 s window, 0.1 s hop):
+
+```
+lp_mag, hp_rms, hp_rms/lp_mag, raw_rms,
+zero_crossing_rate, spectral_centroid_5-25Hz, mean_abs_diff, acf_peak_5-25Hz
+```
+
+Training data comes from episodes whose voluntary and buffeting components are generated
+explicitly, so the label is the generator's ground truth rather than the heuristic's own output
+— otherwise the comparison would be circular. On 60 held-out episodes:
+
+| Gate | accuracy | precision | recall |
+|---|---|---|---|
+| threshold + hysteresis (2024) | 0.790 | 0.529 | 0.950 |
+| learned logistic regression | 0.952 | 0.847 | 0.973 |
+
+The weights are checked in as `iars/stabilization/intent_weights.json` (~2 KB) so the gate can
+be loaded without a training pass; `tools/train_intent.py` regenerates them. The classifier is
+deliberately eight features and one matrix multiply, because the target is the 400 Hz MCU loop,
+not a GPU — quantising it for that loop is the remaining roadmap item.
 
 ---
 

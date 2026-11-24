@@ -2,9 +2,12 @@
 
 **Algorithm core of a helmet-mounted AR head-up display for high-dynamic, hands-busy environments — skydiving, disaster-response firefighting, and tactical freefall.**
 
-`Python 3.9+` · `25 unit tests` · `MIT licensed` · `2024 prototype, open-sourced 2026`
+`Python 3.9+` · `32 unit tests` · `MIT licensed` · `2024 prototype, open-sourced 2026`
 
-![Swift IARS HUD during freefall](docs/assets/hero_freefall_hud.jpg)
+![Swift IARS HUD symbology over a freefall scene — 2024 design render](docs/assets/hero_freefall_hud.jpg)
+
+*HUD symbology composited over a freefall scene — a **2024 concept render, not an in-flight
+photograph**; the numbers shown are illustrative, not recorded telemetry.*
 
 ---
 
@@ -12,9 +15,14 @@
 
 Swift IARS (Integrated Augmented Reality System) is a helmet-clip AR module that replaces the
 four to five separate instruments a skydiver, firefighter or tactical operator currently straps
-to themselves with one fused, stabilised head-up display. The 2024 prototype reached a working
-proof-of-concept: a binocular geometric-waveguide display, a modular sensor head, bilingual
-audio alerting, and the on-board algorithm suite in this repository.
+to themselves with one fused, stabilised head-up display.
+
+The 2024 effort produced a physical proof-of-concept: a helmet-mounted sensor head and host
+board, a geometric-waveguide optical module, multilingual audio alerting, and a flight unit that
+completed its air-data collection mission. The **algorithm core** — the four blocks below — is
+what this repository contains: implemented in 2026 from the 2024 design and released open
+source. [Provenance](#provenance-how-this-repository-was-built) states exactly which parts are
+original 2024 work and which are the 2026 implementation.
 
 This repository open-sources the **four algorithm blocks that make the display usable in
 freefall**, together with a synthetic flight-data harness that lets anyone reproduce the
@@ -31,8 +39,10 @@ benchmarks without the (privacy-sensitive) real flight logs:
 
 > **Status.** The prototype and its flight campaign date to **2024** (business plan: 2024-07-06).
 > The production firmware, the mechanical/optical design and the raw sensor logs are not public.
-> What is released here is a faithful, self-contained reconstruction of the algorithm core that
-> runs end-to-end and passes its test suite. See [What is (and isn't) in this repo](#what-is-and-isnt-in-this-repo).
+> What is released here is a self-contained implementation of the algorithm core that runs
+> end-to-end and passes its test suite. See
+> [Provenance](#provenance-how-this-repository-was-built) and
+> [What is (and isn't) in this repo](#what-is-and-isnt-in-this-repo).
 
 ---
 
@@ -64,14 +74,23 @@ others are measuring. The value is in the fusion and the *presentation*, not in 
   <img src="docs/assets/optics_module.jpg" width="46%" alt="Optical module internals" />
 </p>
 
-| Sub-system | 2024 POC specification |
+*Top row: POC hardware photographs, 2024. Bottom left: the visor sample, shown without the
+electrochromic lens. Bottom right: the host-board optical module, a CAD render rather than a
+photograph.*
+
+| Sub-system | 2024 design target / POC state |
 |---|---|
-| Display | binocular, full-colour, dual-source geometric-waveguide, >40° FOV, 1920×1080 |
+| Display | binocular, full-colour, dual-source geometric-waveguide, >40° FOV, 1920×1080 *(design targets; the POC sample was photographed without the electrochromic lens fitted)* |
 | Mounting | helmet-clip, flip-up, weight distributed through the helmet shell |
 | Compute | on-helmet MCU + sensor head (no external phone or pack) |
-| Sensors | BMX160 IMU (accel + gyro + magnetometer), MS5611 barometer, GNSS/BeiDou, pitot, ambient light, stereo waveguide cameras |
+| Sensors | BMX160 IMU (accel + gyro + magnetometer), MS5611 barometer, GNSS/BeiDou, pitot, ambient light *(planned sensor set; the POC host board carried the IMU and barometer)* |
 | Alerting | multilingual audio cues + AAD status |
 | Targets | C-end extreme sports → B-end OEM (motorcycle/helmet brands) → G-end firefighting & military |
+
+The table above is the **2024 design target and the state of the POC hardware**, not a measured
+production specification. The stereo visual aid used by the navigator below is an addition made
+for this open-source version: the 2024 sensor plan contained no cameras, but a pose that survives
+GNSS loss under canopy needs a non-GNSS reference.
 
 The display layer the wearer actually sees:
 
@@ -88,7 +107,7 @@ The display layer the wearer actually sees:
 Sensor streams feed the redundancy block, which produces the aiding measurements for the ESKF
 navigator. The navigator's pose drives the HUD compositor, which is *separately* stabilised in
 the head frame and *separately* corrected for binocular alignment — three concerns that consumer
-stacks usually conflate, and the reason the symbology survives freefall here.
+stacks usually conflate, and the reason the symbology is designed to survive freefall here.
 
 ---
 
@@ -107,9 +126,9 @@ per-source bias, so a mildly biased instrument is down-weighted rather than disc
 
 ![Redundancy fusion](docs/assets/fig_redundancy.png)
 
-*With a deliberately frozen GNSS channel and a slowly drifting barometer injected, the fused
-estimate holds **1.57 m RMS** (5.47 m max) against truth, and no sample is ever wrongly flagged
-as degraded.*
+*With a deliberately frozen GNSS channel and a slowly drifting barometer injected into the
+synthetic harness, the fused estimate holds **1.57 m RMS** (5.47 m max) against truth, and no
+sample is ever wrongly flagged as degraded. Simulation result.*
 
 → [`iars/redundancy/fusion.py`](iars/redundancy/fusion.py) · tests: [`tests/test_redundancy.py`](tests/test_redundancy.py)
 
@@ -132,7 +151,24 @@ when the wearer is only being shaken.
 *On a synthetic freefall profile the buffeting band is attenuated **25.7 dB**, RMS jitter drops
 from **37.3 to 1.9 deg/s**, and voluntary tracking stays within 2.2 deg/s RMS.*
 
-→ [`iars/stabilization/head_motion.py`](iars/stabilization/head_motion.py) · tests: [`tests/test_stabilization.py`](tests/test_stabilization.py)
+#### Learned intent gate (2026 addition)
+
+The threshold/hysteresis gate above is replaced, optionally, by a small learned classifier
+([`iars/stabilization/intent.py`](iars/stabilization/intent.py)): eight windowed gyro features —
+voluntary-band magnitude, buffeting RMS, their ratio, spectral centroid, zero-crossing rate,
+autocorrelation peak in the 5–25 Hz band — fed to a logistic regression small enough for the
+400 Hz loop. It is trained on episodes in which the voluntary and buffeting components are known
+**by construction** ([`iars/sensors/intent_dataset.py`](iars/sensors/intent_dataset.py)), so the
+accuracy comparison is against generator ground truth, not against the heuristic's own output.
+
+![Learned intent gate](docs/assets/fig_intent.png)
+
+*On 60 held-out episodes the learned gate lifts accuracy from **0.79 to 0.95** and precision from
+**0.53 to 0.85**: the fixed threshold over-triggers whenever a hard buffet leaks low-frequency
+energy through the 1.8 Hz split, which is exactly the failure the classifier is trained to
+separate.*
+
+→ [`iars/stabilization/head_motion.py`](iars/stabilization/head_motion.py) · [`iars/stabilization/intent.py`](iars/stabilization/intent.py) · tests: [`tests/test_stabilization.py`](tests/test_stabilization.py), [`tests/test_intent.py`](tests/test_intent.py)
 
 ### III. Binocular display alignment
 
@@ -168,8 +204,8 @@ X   ⊕ δx,  P ← (I−KH) P (I−KH)ᵀ + K R Kᵀ   (Joseph form injection)
 ![Navigation](docs/assets/fig_navigation.png)
 
 *Fusing vision, GNSS and baro, the filter tracks truth to **0.25 m RMS** (0.13 m final error)
-through the whole 60 s profile — including a 7 s GNSS outage — where a pure inertial solution
-has already diverged to **31 m RMS**.*
+through the whole 60 s synthetic profile — including a 7 s GNSS outage — where a pure inertial
+solution has already diverged to **31 m RMS**. Simulation result.*
 
 → [`iars/slam/eskf.py`](iars/slam/eskf.py) · [`iars/slam/frames.py`](iars/slam/frames.py) · tests: [`tests/test_eskf.py`](tests/test_eskf.py)
 
@@ -184,14 +220,88 @@ has already diverged to **31 m RMS**.*
 | II. Stabilisation | buffeting attenuation | 25.7 dB |
 | II. Stabilisation | jitter RMS (raw → stabilised) | 37.3 → 1.9 deg/s |
 | II. Stabilisation | display latency | 88 ms |
+| II. Intent gate | intent accuracy (heuristic → learned) | 0.79 → 0.95 |
+| II. Intent gate | intent precision (heuristic → learned) | 0.53 → 0.85 |
 | III. Stereo | vertical divergence detected | 11.5 arcmin (limit 10) |
 | III. Stereo | inter-eye disparity (raw → corrected) | 8.30 → 0.80 px |
 | IV. Navigation | ESKF position RMSE | 0.25 m |
 | IV. Navigation | pure-INS position RMSE | 30.97 m |
 
-All figures are produced by the synthetic harness in [`iars/sensors/simulator.py`](iars/sensors/simulator.py);
-they are simulation results, not flight-tested specifications.
+Every figure is produced by the synthetic harness ([`iars/sensors/simulator.py`](iars/sensors/simulator.py),
+[`iars/sensors/intent_dataset.py`](iars/sensors/intent_dataset.py)) on a laptop CPU. **These are
+simulation results, not flight-tested specifications** — see
+[Provenance](#provenance-how-this-repository-was-built) for why that distinction matters.
 </details>
+
+---
+
+## Provenance: how this repository was built
+
+A portfolio repository should be explicit about what it is, so this section is deliberately
+blunt.
+
+**Original 2024 work.** The product concept, the market and requirement analysis, the
+hardware/optical/mechanical POC, the flight-test campaign and its recorded air-data, the
+decomposition of the display problem into four algorithm blocks, the viewing-comfort and
+anti-shake acceptance criteria, and the algorithm design steps (separating voluntary head
+rotation from buffeting, defining anti-shake acceptance metrics, cancelling jitter, then
+following head rotation) all date to 2024 and are the founder's work. The 2024 material names
+three core algorithms — redundancy design, anti-shake, and binocular imaging — and marks them
+"substantially developed"; the flight unit completed its air-data collection mission explicitly
+so the recorded data could drive the final algorithm design.
+
+**What is written in 2026.** This repository. The original 2024 source is not public and is not
+included here; the code, tests, figures and documentation in this repo were written in 2026 to
+open-source the algorithm core. The real flight logs are personal telemetry and are not
+published, so the repository ships a synthetic harness that reproduces the salient statistics
+instead. The commit dates are set to the 2024 prototype timeline rather than the 2026 authoring
+date, so the history reads against the milestones above — the code was authored in 2026.
+
+**AI assistance.** The 2026 implementation was drafted with AI coding assistance and then
+reviewed, tested and tuned. The algorithm choices, acceptance criteria, architecture and
+validation are the author's; the code was not accepted without being run and checked (the test
+suite is the evidence). This is stated openly because the alternative — letting a reader assume
+either "fully hand-written in 2024" or "fully machine-generated" — would both be false.
+
+**Residual uncertainty.** Because the implementation was not developed against the original
+logs, every number in this README is a **simulation result from the synthetic harness**, not
+flight-tested performance. Real buffeting spectra, real GNSS-outage statistics and the actual
+waveguide-to-waveguide alignment spreads are modelled assumptions. The constants in
+[`iars/config.py`](iars/config.py) are the author's estimates, not bench-calibrated values, and
+should be re-tuned before any hardware use.
+
+### Engineering decisions worth calling out
+
+**Why an error-state Kalman filter instead of an EKF on the quaternion.** Three reasons, all of
+which matter in freefall. (1) *Linearisation validity*: the body rate is large and the
+accelerations are violent, so a filter that linearises about the full attitude accumulates error
+whenever the attitude correction is big (a GNSS re-acquisition after canopy transit is exactly
+that). An ESKF propagates the nominal state non-linearly and estimates only the *error*, which
+stays near zero, so the linearisation remains valid; the reset after each update keeps it there.
+(2) *Manifold correctness*: the error is injected as `q ← q ⊗ Exp(δθ)`, which is exact on SO(3)
+and avoids the normalisation drift a naive quaternion EKF develops. (3) *Gating*: the innovation
+gate is applied to the error state, which is what lets the filter reject the first fix after a
+7 s outage rather than being yanked by it.
+
+**Why the display stabilisation is decoupled from SLAM.** The two loops have incompatible
+requirements. The display loop must run at IMU rate with bounded latency and must never stall;
+the navigator's vision updates arrive at ~30 Hz and can drop out entirely (featureless sky,
+smoke). If the symbology were driven by the SLAM pose, a single tracking dropout or the canopy
+GNSS outage would freeze or jerk the horizon — the one thing the wearer is relying on. Decoupled,
+the symbology is regenerated from the IMU alone at all times and the navigator only supplies the
+annotation layer (where things are). The consequence is a deliberate degradation hierarchy: a
+pose dropout costs annotations, never the horizon.
+
+**Why explicit redundancy voting sits outside the filter.** The filter could ingest all four
+altitude sources directly and let the covariance sort them out, but a covariance cannot express
+"the GNSS channel is stuck and I know it". Explicit clustering gives an isolable fault, a named
+culprit and a degraded-mode flag the HUD can act on; the filter then sees one clean measurement
+with a known variance.
+
+**Why the acceptance criteria are thresholds and not learned objectives.** Binocular comfort
+limits (10 arcmin vertical divergence, 0.5° relative tilt) and the ≤100 ms display-latency budget
+are human-factors constraints, not tunable losses. Encoding them as pass/fail criteria keeps the
+tuning loop honest: a change either meets the limit or it does not.
 
 ---
 
@@ -232,16 +342,20 @@ be decoupled from SLAM so an occasional tracking dropout never blurs the symbolo
 iars/
   config.py                 tuning parameters (POC firmware profile, SI units)
   sensors/simulator.py      synthetic flight-data harness (no real logs are public)
+  sensors/intent_dataset.py labelled episodes for the learned intent gate
   redundancy/fusion.py      I.  redundancy design & fault-tolerant fusion
   stabilization/head_motion.py  II.  head-motion separation & stabilisation
+  stabilization/intent.py   learned intent gate (features + logistic regression)
+  stabilization/intent_weights.json  trained weights (checked in, ~2 KB)
   stereo/alignment.py       III. binocular display alignment
   slam/frames.py            rigid-body math (quaternions, SO(3) exp/log)
   slam/eskf.py              IV. 15-state ESKF navigator
   telemetry/hud.py          HUD compositor / symbology renderer
   pipeline.py               end-to-end run across all four blocks
-tests/                      25 unit tests, one module per algorithm block
+tests/                      32 unit tests, one module per algorithm block
 tools/generate_figures.py   regenerates every figure in this README
 tools/run_demo.py           runs the pipeline and prints the benchmark table
+tools/train_intent.py       trains / evaluates the learned intent gate
 docs/ALGORITHMS.md          derivation notes and design rationale
 ```
 
@@ -251,6 +365,7 @@ docs/ALGORITHMS.md          derivation notes and design rationale
 python -m pip install -e ".[dev]"   # or: pip install -r requirements.txt
 python -m pytest -q                 # run the test suite (all tests pass)
 python tools/run_demo.py            # print the benchmark summary
+python tools/train_intent.py        # retrain the learned intent gate
 python tools/generate_figures.py    # regenerate the figures in docs/assets/
 ```
 
@@ -259,15 +374,17 @@ deployment, canopy) with realistic buffeting, GNSS outage and sensor noise.
 
 ## Roadmap
 
+- [x] Learned intent classifier to replace the heuristic hysteresis gate *(done — 0.79 → 0.95 accuracy on held-out episodes)*
+- [ ] Quantise the intent gate and benchmark it inside the 400 Hz MCU loop
 - [ ] ROS 2 / micro-ROS bridge for the on-helmet firmware loop
 - [ ] Tight visual-inertial coupling (feature-level) in place of the loose pose update
-- [ ] Learned intent classifier to replace the heuristic hysteresis gate
 - [ ] Public benchmark protocol and a second synthetic profile (smoke diving, motorcycle)
 
 ## What is (and isn't) in this repo
 
-**In:** the four algorithm blocks, the rigid-body/EKF math, the synthetic simulator, the HUD
-compositor, the figure generator, and the test suite — all runnable and passing.
+**In:** the four algorithm blocks, the learned intent gate and its checked-in weights, the
+rigid-body/EKF math, both synthetic datasets, the HUD compositor, the figure generator, and the
+test suite — all runnable and passing.
 
 **Not in:** production firmware, PCB/optical/mechanical design files, real flight logs, and
 business-plan material. The simulator exists precisely so the algorithms can be reproduced
