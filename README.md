@@ -240,13 +240,12 @@ simulation results, not flight-tested specifications** — see
 A portfolio repository should be explicit about what it is, so this section is deliberately
 blunt.
 
-**Original 2024 work — and who did what.** The project ran in 2024 as a small student team under
-the working name "Swift Sports Solutions" (never a registered company; the team has since
-disbanded). **My role was project lead and the embedded/algorithm work**: the product concept,
-the requirement and market analysis, the decomposition of the display problem into algorithm
-blocks, the viewing-comfort and anti-shake acceptance criteria, and the algorithm design steps
-(separating voluntary head rotation from buffeting, defining anti-shake acceptance metrics,
-cancelling jitter, then following head rotation). The **industrial and mechanical design was
+**Original 2024 work — and who did what.** Swift IARS was a 2024 startup project. **My role was
+project lead and the embedded/algorithm work**: the product concept, the requirement and market
+analysis, the decomposition of the display problem into algorithm blocks, the viewing-comfort and
+anti-shake acceptance criteria, and the algorithm design steps (separating voluntary head
+rotation from buffeting, defining anti-shake acceptance metrics, cancelling jitter, then
+following head rotation). The **industrial and mechanical design was
 contributed by an industrial designer on the team**, and the flight-test campaign and air-data
 collection were a **team effort**. The 2024 material names three core algorithms — redundancy
 design, anti-shake, and binocular imaging — and marks them "substantially developed"; the flight
@@ -395,6 +394,5 @@ without the private data.
 
 ## Author & license
 
-**Project lead: Zixin Jia.** The 2024 prototype was a small student team effort under the working
-name "Swift Sports Solutions" (not a registered company); the 2026 algorithm implementation and
-this open-source release are mine. MIT licensed — see [`LICENSE`](LICENSE).
+**Project lead: Zixin Jia.** Swift IARS was a 2024 startup project; the 2026 algorithm
+implementation and this open-source release are mine. MIT licensed — see [`LICENSE`](LICENSE).
