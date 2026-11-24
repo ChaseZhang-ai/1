@@ -6,8 +6,8 @@
 
 ![Swift IARS HUD symbology over a freefall scene — 2024 design render](docs/assets/hero_freefall_hud.jpg)
 
-*HUD symbology composited over a freefall scene — a **2024 concept render, not an in-flight
-photograph**; the numbers shown are illustrative, not recorded telemetry.*
+*HUD symbology composited over a freefall scene — a **2024 concept render from the project, not
+an in-flight photograph**; the numbers shown are illustrative, not recorded telemetry.*
 
 ---
 
@@ -74,9 +74,9 @@ others are measuring. The value is in the fusion and the *presentation*, not in 
   <img src="docs/assets/optics_module.jpg" width="46%" alt="Optical module internals" />
 </p>
 
-*Top row: POC hardware photographs, 2024. Bottom left: the visor sample, shown without the
-electrochromic lens. Bottom right: the host-board optical module, a CAD render rather than a
-photograph.*
+*Top row: POC hardware photographs from the 2024 project. Bottom left: the visor sample, shown
+without the electrochromic lens. Bottom right: the host-board optical module — a CAD render by
+the team's industrial designer, not a photograph.*
 
 | Sub-system | 2024 design target / POC state |
 |---|---|
@@ -240,19 +240,22 @@ simulation results, not flight-tested specifications** — see
 A portfolio repository should be explicit about what it is, so this section is deliberately
 blunt.
 
-**Original 2024 work.** The product concept, the market and requirement analysis, the
-hardware/optical/mechanical POC, the flight-test campaign and its recorded air-data, the
-decomposition of the display problem into four algorithm blocks, the viewing-comfort and
-anti-shake acceptance criteria, and the algorithm design steps (separating voluntary head
-rotation from buffeting, defining anti-shake acceptance metrics, cancelling jitter, then
-following head rotation) all date to 2024 and are the founder's work. The 2024 material names
-three core algorithms — redundancy design, anti-shake, and binocular imaging — and marks them
-"substantially developed"; the flight unit completed its air-data collection mission explicitly
-so the recorded data could drive the final algorithm design.
+**Original 2024 work — and who did what.** The project ran in 2024 as a small student team under
+the working name "Swift Sports Solutions" (never a registered company; the team has since
+disbanded). **My role was project lead and the embedded/algorithm work**: the product concept,
+the requirement and market analysis, the decomposition of the display problem into algorithm
+blocks, the viewing-comfort and anti-shake acceptance criteria, and the algorithm design steps
+(separating voluntary head rotation from buffeting, defining anti-shake acceptance metrics,
+cancelling jitter, then following head rotation). The **industrial and mechanical design was
+contributed by an industrial designer on the team**, and the flight-test campaign and air-data
+collection were a **team effort**. The 2024 material names three core algorithms — redundancy
+design, anti-shake, and binocular imaging — and marks them "substantially developed"; the flight
+unit completed its air-data collection mission explicitly so the recorded data could drive the
+final algorithm design.
 
 **What is written in 2026.** This repository. The original 2024 source is not public and is not
-included here; the code, tests, figures and documentation in this repo were written in 2026 to
-open-source the algorithm core. The real flight logs are personal telemetry and are not
+included here; the code, tests, figures and documentation in this repo are my 2026 work, written
+to open-source the algorithm core. The real flight logs are personal telemetry and are not
 published, so the repository ships a synthetic harness that reproduces the salient statistics
 instead. The commit dates are set to the 2024 prototype timeline rather than the 2026 authoring
 date, so the history reads against the milestones above — the code was authored in 2026.
@@ -392,5 +395,6 @@ without the private data.
 
 ## Author & license
 
-Built by **Zixin Jia** (Swift Sports Solutions) in 2024; open-sourced in 2026. MIT licensed —
-see [`LICENSE`](LICENSE).
+**Project lead: Zixin Jia.** The 2024 prototype was a small student team effort under the working
+name "Swift Sports Solutions" (not a registered company); the 2026 algorithm implementation and
+this open-source release are mine. MIT licensed — see [`LICENSE`](LICENSE).
